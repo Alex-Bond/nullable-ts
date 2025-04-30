@@ -4,6 +4,10 @@
   "description": "Immutable variable helper to handle undefined/null values and output types.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alex-bond/nullable-ts.git"
+  },
   "scripts": {
     "start": "tsc --watch",
     "prepare": "tsc",
