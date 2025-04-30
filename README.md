@@ -2,11 +2,14 @@
 
 A TypeScript library for safely handling undefined/null values with immutable, chainable operations and enhanced type safety.
 
-## Installation
+[//]: # (## Installation)
 
-```bash
-npm install @alex-bond/nullable
-```
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (npm install @alex-bond/nullable)
+
+[//]: # (```)
 
 ## Features
 
