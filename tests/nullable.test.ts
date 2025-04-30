@@ -1,4 +1,5 @@
 import nullable from '../src/index'
+import { Middleware } from '../src/nullable'
 
 describe('Nullable', () => {
   describe('getValue', () => {
@@ -141,26 +142,50 @@ describe('Nullable', () => {
 
   describe('middleware', () => {
     it('should apply middleware to transform values', () => {
-      const middleware = (current: any) => {
+      // Define middleware that uppercases string values
+      const middleware: Middleware = (current, set) => {
         const value = current.getValue()
-        return nullable(value.toUpperCase())
+        return set(typeof value === 'string' ? value.toUpperCase() : value)
       }
 
       expect(nullable('test').use(middleware).getString()).toBe('TEST')
     })
 
     it('should apply multiple middleware in order', () => {
-      const prefix = (current: any) => {
+      // Define middleware that adds prefix
+      const prefix: Middleware = (current, set) => {
         const value = current.getValue()
-        return nullable(`prefix_${value}`)
+        return set(`prefix_${value}`)
       }
 
-      const suffix = (current: any) => {
+      // Define middleware that adds suffix
+      const suffix: Middleware = (current, set) => {
         const value = current.getValue()
-        return nullable(`${value}_suffix`)
+        return set(`${value}_suffix`)
       }
 
       expect(nullable('test').use(prefix, suffix).getString()).toBe('prefix_test_suffix')
+    })
+  })
+
+  describe('type safety', () => {
+    it('should provide proper return types with orThrow', () => {
+      const text = nullable('text').orThrow(new Error('test')).getString()
+      expect(typeof text).toBe('string')
+
+      // TypeScript compilation check - this would fail to compile:
+      // const shouldBeString: string | null = nullable('text').getString()
+
+      // This would compile:
+      // const stringOrNull: string | null = nullable('text').orThrow(new Error('test')).isNullable().getString()
+    })
+
+    it('should provide proper return types with isNullable', () => {
+      const nullableText = nullable(null).isNullable().getString()
+      expect(nullableText).toBeNull()
+
+      // TypeScript compilation check - this would be allowed:
+      // const stringOrNull: string | null = nullable('text').orThrow(new Error('test')).isNullable().getString()
     })
   })
 })

@@ -1,6 +1,6 @@
 # @alex-bond/nullable
 
-A TypeScript library for safely handling undefined/null values with immutable, chainable operations.
+A TypeScript library for safely handling undefined/null values with immutable, chainable operations and enhanced type safety.
 
 ## Installation
 
@@ -10,11 +10,12 @@ npm install @alex-bond/nullable
 
 ## Features
 
-- Type-safe handling of null/undefined values
+- Fully type-safe handling of null/undefined values
 - Chainable API with immutable operations
 - Configurable error handling for null/undefined cases
 - Safe type conversions with validation
 - Middleware support for custom transformations
+- Generic type parameters for precise return type definitions
 
 ## Usage
 
@@ -83,29 +84,40 @@ nullable("").getBool(true);   // false
 
 ### Using Middleware
 
-Middleware allows for custom transformations in the processing chain.
+Middleware allows for custom transformations in the processing chain. The middleware takes a current value and a setter function for creating a new Nullable instance.
 
 ```typescript
 // Single middleware
-const toUpperCase = (current) => {
+const toUpperCase = (current, set) => {
   const value = current.getValue();
-  return nullable(typeof value === 'string' ? value.toUpperCase() : value);
+  return set(typeof value === 'string' ? value.toUpperCase() : value);
 };
 
 nullable("hello").use(toUpperCase).getString();  // "HELLO"
 
 // Multiple middleware
-const addPrefix = (current) => {
+const addPrefix = (current, set) => {
   const value = current.getValue();
-  return nullable(`prefix_${value}`);
+  return set(`prefix_${value}`);
 };
 
-const addSuffix = (current) => {
+const addSuffix = (current, set) => {
   const value = current.getValue();
-  return nullable(`${value}_suffix`);
+  return set(`${value}_suffix`);
 };
 
 nullable("test").use(addPrefix, addSuffix).getString();  // "prefix_test_suffix"
+```
+
+For TypeScript users, middleware can be properly typed using the exported `Middleware` type:
+
+```typescript
+import nullable, { Middleware } from '@alex-bond/nullable';
+
+const toUpperCase: Middleware = (current, set) => {
+  const value = current.getValue();
+  return set(typeof value === 'string' ? value.toUpperCase() : value);
+};
 ```
 
 ## API Reference
@@ -123,6 +135,24 @@ Creates a new Nullable instance wrapping the provided value.
 - `.getNumber()` - Converts value to number (throws if conversion fails)
 - `.getBool(force?)` - Converts value to boolean (throws if conversion fails and force is false)
 - `.use(...middleware)` - Applies one or more middleware functions to transform the value
+
+### Type Safety
+
+The library provides full type safety when chaining methods:
+
+```typescript
+// With orThrow
+const text = nullable('text').orThrow(new Error('test')).getString();
+// TypeScript knows that text is a string (not string | null | undefined)
+
+// With isNullable
+const nullableText = nullable(null).isNullable().getString();
+// TypeScript knows that nullableText is null (not string | null | undefined)
+
+// With both
+const stringOrNull = nullable('text').orThrow(new Error('test')).isNullable().getString();
+// TypeScript knows that stringOrNull is string | null (not string | null | undefined)
+```
 
 ## License
 

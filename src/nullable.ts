@@ -12,7 +12,21 @@ type State = Record<string, any> & {
 /**
  * Function type for middleware that transforms Nullable instances
  */
-type Middleware = (current: Nullable) => Nullable
+export type Middleware = <
+  ValueType = unknown,
+  ErrorState extends boolean = false,
+  NullableState extends boolean = false,
+>(
+  current: Nullable<ValueType, ErrorState, NullableState>,
+  setter: (value: unknown) => Nullable<unknown, ErrorState, NullableState>,
+) => Nullable<unknown, ErrorState, NullableState>
+
+type ReturnType<
+  T,
+  ErrorState extends boolean,
+  NullableState extends boolean,
+> = ErrorState extends true ? (NullableState extends true ? T | null : T) : T | null | undefined
+
 
 /**
  * Nullable provides ability to work with unknown values of variables.
@@ -25,7 +39,11 @@ type Middleware = (current: Nullable) => Nullable
  * - Safe type conversions with validation
  * - Immutable operations
  */
-class Nullable<ValueType = unknown> {
+class Nullable<
+  ValueType = unknown,
+  ErrorState extends boolean = false,
+  NullableState extends boolean = false,
+> {
   private readonly value: ValueType
 
   readonly state: State = {
@@ -58,7 +76,7 @@ class Nullable<ValueType = unknown> {
    * @param error The error to throw
    * @returns A new Nullable instance with updated configuration
    */
-  orThrow(error: Error): Nullable<ValueType> {
+  orThrow(error: Error): Nullable<ValueType, true, NullableState> {
     return new Nullable(this.value, { ...this.state, onUndefined: error })
   }
 
@@ -66,7 +84,7 @@ class Nullable<ValueType = unknown> {
    * Configures the instance to allow null values
    * @returns A new Nullable instance with updated configuration
    */
-  isNullable() {
+  isNullable(): Nullable<ValueType, ErrorState, true> {
     return new Nullable(this.value, { ...this.state, allowNull: true })
   }
 
@@ -75,7 +93,7 @@ class Nullable<ValueType = unknown> {
    * @param middleware One or more middleware functions
    * @returns A new Nullable instance with the middleware applied
    */
-  use(...middleware: Middleware[]): Nullable {
+  use(...middleware: Middleware[]): Nullable<ValueType, ErrorState, NullableState> {
     return new Nullable(this.value, {
       ...this.state,
       middleware: [...this.state.middleware, ...middleware],
@@ -86,9 +104,9 @@ class Nullable<ValueType = unknown> {
    * Converts the value to a string, handling null/undefined according to configuration
    * @returns String representation of the value, or null/undefined
    */
-  getString() {
+  getString(): ReturnType<string, ErrorState, NullableState> {
     const value = this.terminateChain()
-    if (isUndefinedOrNull(value)) return value as null | undefined
+    if (isUndefinedOrNull(value)) return value as ReturnType<string, ErrorState, NullableState>
 
     return String(value)
   }
@@ -98,9 +116,9 @@ class Nullable<ValueType = unknown> {
    * @returns Numeric representation of the value, or null/undefined
    * @throws Error if the value cannot be converted to a number
    */
-  getNumber() {
+  getNumber(): ReturnType<number, ErrorState, NullableState> {
     const value = this.terminateChain()
-    if (isUndefinedOrNull(value)) return value as null | undefined
+    if (isUndefinedOrNull(value)) return value as ReturnType<number, ErrorState, NullableState>
 
     const num = Number(value)
     if (isNaN(num)) {
@@ -120,9 +138,9 @@ class Nullable<ValueType = unknown> {
    * @returns Boolean representation of the value, or null/undefined
    * @throws Error if the value cannot be converted to a boolean and force is false
    */
-  getBool(force = false) {
+  getBool(force = false): ReturnType<boolean, ErrorState, NullableState> {
     const value = this.terminateChain()
-    if (isUndefinedOrNull(value)) return value as null | undefined
+    if (isUndefinedOrNull(value)) return value as ReturnType<boolean, ErrorState, NullableState>
 
     if (typeof value === 'boolean') return value
 
@@ -147,14 +165,17 @@ class Nullable<ValueType = unknown> {
    * @throws Error if configured to throw on undefined/null
    */
   private terminateChain() {
-    if (this.value === undefined || (this.value === null && !this.state.allowNull)) {
-      if (this.state.onUndefined) throw this.state.onUndefined
+    if (this.state.onUndefined) {
+      if (this.value === undefined || (this.value === null && !this.state.allowNull)) {
+        throw this.state.onUndefined
+      }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    let state: Nullable = this
+    let state: Nullable<unknown, ErrorState, NullableState> = this
     this.state.middleware.forEach((f) => {
-      state = f(state)
+      state = f(state, (value) => {
+        return new Nullable(value, this.state)
+      })
     })
 
     return state.value

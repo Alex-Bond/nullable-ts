@@ -127,11 +127,10 @@ var Nullable = /** @class */ (function () {
      * @throws Error if configured to throw on undefined/null
      */
     Nullable.prototype.terminateChain = function () {
-        if (this.value === undefined || (this.value === null && !this.state.allowNull)) {
-            if (this.state.onUndefined)
+        if (this.state.onUndefined) {
+            if (this.value === undefined || (this.value === null && !this.state.allowNull))
                 throw this.state.onUndefined;
         }
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
         var state = this;
         this.state.middleware.forEach(function (f) {
             state = f(state);

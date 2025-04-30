@@ -1,3 +1,3 @@
-export const isUndefinedOrNull = (value: unknown) => {
+export const isUndefinedOrNull = <T>(value: T | undefined | null): value is undefined | null => {
   return value === undefined || value === null
 }
