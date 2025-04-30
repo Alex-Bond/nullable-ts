@@ -1,5 +1,5 @@
 import { nullable, Middleware } from './nullable'
 
-export { Middleware }
+export { nullable, Middleware }
 
 export default nullable

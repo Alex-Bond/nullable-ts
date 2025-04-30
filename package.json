@@ -4,7 +4,15 @@
   "description": "Immutable variable helper to handle undefined/null values and output types.",
   "type": "commonjs",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/alex-bond/nullable-ts.git"
