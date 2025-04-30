@@ -1,3 +1,5 @@
-import { nullable } from './nullable'
+import { nullable, Middleware } from './nullable'
+
+export { Middleware }
 
 export default nullable
